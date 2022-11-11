@@ -39,8 +39,8 @@ multitenancy:
       -
         tenantId: tenant_1
         url: jdbc:mysql://localhost:3306/test1
-        username: root
-        password: root
+        username: javaapp
+        password: javaapp
         driverClassName: com.mysql.jdbc.Driver
         initialPoolSize: 3
         minPoolSize: 1
@@ -49,8 +49,8 @@ multitenancy:
       -
         tenantId: tenant_2
         url: jdbc:mysql://localhost:3306/test2
-        username: root
-        password: root
+        username: javaapp
+        password: javaapp
         driverClassName: com.mysql.jdbc.Driver
         initialPoolSize: 5
         minPoolSize: 1
