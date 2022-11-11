@@ -38,7 +38,7 @@ multitenancy:
     dataSources:
       -
         tenantId: tenant_1
-        url: jdbc:mysql://localhost:3306/test1
+        url: jdbc:mysql://10.21.12.183:3306/test1
         username: javaapp
         password: javaapp
         driverClassName: com.mysql.jdbc.Driver
@@ -48,7 +48,7 @@ multitenancy:
         maxPoolSize: 5
       -
         tenantId: tenant_2
-        url: jdbc:mysql://localhost:3306/test2
+        url: jdbc:mysql://10.21.12.183:3306/test2
         username: javaapp
         password: javaapp
         driverClassName: com.mysql.jdbc.Driver
