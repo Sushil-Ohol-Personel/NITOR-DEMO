@@ -42,6 +42,7 @@ jobs:
         args: --severity-threshold=low
    
   Snyk-Code-Scanning:
+    needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -57,8 +58,8 @@ jobs:
       with:
         sarif_file: snyk.sarif
 
-  
     - name: Snyk Login
+      
       run: |
            docker images
            npm install snyk -g
