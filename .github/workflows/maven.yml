@@ -60,6 +60,7 @@ jobs:
   
     - name: Snyk Login
       run: |
+           npm install snyk -g
            snyk auth ${{ secrets.SNYK_TOKEN }}
            snyk container test devsecops:latest
                     
