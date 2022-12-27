@@ -21,10 +21,7 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-  Docker-Image-Build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
+  
     - name: Docker image build
     
       run: |
