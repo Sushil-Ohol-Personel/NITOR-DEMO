@@ -55,10 +55,11 @@ jobs:
     steps:
     - name: Docker image build 
       run: |
+          ls -la
           docker build -t devsecops:latest .
           docker images
     - name: Snyk Login
       run: |
            snyk auth ${{ secrets.SNYK_TOKEN }}
-           snyk container test  devsecops:latest
+           snyk container test devsecops:latest
                     
