@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  buildanddockerimage:
 
     runs-on: ubuntu-latest
 
@@ -28,8 +28,15 @@ jobs:
           ls -la
           docker build -t devsecops:latest .
           docker images
+    - name: Snyk Login
+      run: |
+           docker images
+           npm install snyk -g
+           snyk auth ${{ secrets.SNYK_TOKEN }}
+           snyk container test devsecops:latest
            
   Snyk-test:
+    
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -42,7 +49,7 @@ jobs:
         args: --severity-threshold=low
    
   Snyk-Code-Scanning:
-    needs: build
+    needs: buildanddockerimage
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -58,11 +65,5 @@ jobs:
       with:
         sarif_file: snyk.sarif
 
-    - name: Snyk Login
-      
-      run: |
-           docker images
-           npm install snyk -g
-           snyk auth ${{ secrets.SNYK_TOKEN }}
-           snyk container test devsecops:latest
+    
                     
