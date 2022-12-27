@@ -21,6 +21,16 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+  Docker-Image-Build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Docker image build
+    
+      run: |
+          ls -la
+          docker build -t devsecops:latest .
+          docker images
            
   Snyk-test:
     runs-on: ubuntu-latest
@@ -50,16 +60,7 @@ jobs:
       with:
         sarif_file: snyk.sarif
 
-  Docker-Image-Build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Docker image build
-    
-      run: |
-          ls -la
-          docker build -t devsecops:latest .
-          docker images
+  
     - name: Snyk Login
       run: |
            snyk auth ${{ secrets.SNYK_TOKEN }}
