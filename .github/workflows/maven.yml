@@ -53,7 +53,9 @@ jobs:
   Docker-Image-Build:
     runs-on: ubuntu-latest
     steps:
-    - name: Docker image build 
+    - uses: actions/checkout@master
+    - name: Docker image build
+    
       run: |
           ls -la
           docker build -t devsecops:latest .
