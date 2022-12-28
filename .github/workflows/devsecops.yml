@@ -72,7 +72,7 @@ jobs:
           cd target
           ls -la
           
-    - run: mkdir Artifact-Package && cp target/*.war Artifact-Package
+    - run: mkdir Artifact-Package && cp target/*.jar Artifact-Package
     - uses: actions/upload-artifact@v3
       with:
         name: Package
