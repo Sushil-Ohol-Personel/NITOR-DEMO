@@ -1,0 +1,140 @@
+name: Java CI with Snyk,Maven,Docker
+
+on:
+ workflow_dispatch:
+   inputs:
+     DockerImageName:
+       description: 'Docker image name'
+       default: 'devsecops'
+       required: true 
+     tag:
+       description: Docker tag
+       default: latest
+       required: true
+jobs:
+  Snyk-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/maven@master
+      continue-on-error: true 
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=low
+    - run: |
+         npm install snyk -g
+         npm install snyk-to-html -g
+         snyk auth ${{ secrets.SNYK_TOKEN }}
+         snyk test --json-file-output=SnykTestReport.json
+      continue-on-error: true
+    - run: snyk-to-html -i SnykTestReport.json -o SnykTestReport.html
+         
+    - run: mkdir SnykTestReport && cp SnykTestReport.html SnykTestReport
+    - uses: actions/upload-artifact@v3 
+      with:
+        name: Snyk Test
+        path: SnykTestReport
+          
+  Snyk-Code-Scanning:
+    needs: Snyk-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/maven@master
+      continue-on-error: true 
+      env:
+         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+         args: --sarif-file-output=snyk.sarif
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: snyk.sarif
+        
+  Build-Docker-Images:
+    runs-on: ubuntu-latest
+    needs: Snyk-Code-Scanning
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      continue-on-error: true     
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build with Maven
+      run: |
+          mvn -B package --file pom.xml
+          ls -la
+          cd target
+          ls -la
+          
+    - run: mkdir Artifact-Package && cp target/*.jar Artifact-Package
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Package
+        path: Artifact-Package  
+     
+    - name: Docker image build
+      run: |
+          docker build -t ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} .
+          docker images
+    - name: Snyk Login
+      run: |
+           npm install snyk -g
+           snyk auth ${{ secrets.SNYK_TOKEN }}
+           snyk container test ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} --json-file-output=SnykDockerImage.json
+      continue-on-error: true   
+    - name: Generate Snyk Docker Image json report into Html format
+      run: |
+           npm install snyk-to-html -g
+           snyk-to-html -i SnykDockerImage.json -o SnykDockerImage.html
+           ls -la
+    - run: mkdir DockerScan && cp SnykDockerImage.html DockerScan      
+    - uses: actions/upload-artifact@v3 
+      with:
+        name: Docker report
+        path: DockerScan
+  Deploy:
+    runs-on: ubuntu-latest #run this workflow on ubuntu instance
+    permissions: #make sure we add permission to read and write package
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1 #checkouts your repo, so this workflow can access it
+      - name: Login to GCR
+        env:
+          PROJECT_ID: cicd-372106 #create env called PROJECT_ID consisted of our actual GCP Project ID
+        uses: google-github-actions/setup-gcloud@v0.3.0 #checkouts GCR repo, so this workflow can access it
+        with:
+          service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }} #parse the value of repository secret called SERVICE_ACCOUNT_KEY that we have created earlier
+          project_id: ${{ env.PROJECT_ID }} #parse the value of env called PROJECT_ID
+          export_default_credentials: true
+          
+      - name: Build Docker Image
+        env:
+          IMAGE_NAME: ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} #create env called IMAGE_NAME consisted of actual name of Docker Image after we build
+          PROJECT_ID: cicd-372106
+
+        run: |
+           mvn -B package --file pom.xml
+           ls -la
+           docker build -t $IMAGE_NAME . 
+        
+      - name: Configure Docker Client
+        run:  |-
+          gcloud auth configure-docker --quiet #authenticate to gcr
+        
+      - name: Push Docker Image to Container Registry GCR
+        env: 
+          IMAGE_NAME: ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}}
+          PROJECT_ID: cicd-372106 
+        #tag docker image to gcr image format then push to gcr
+        run: |-
+          docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME
+          docker push gcr.io/$PROJECT_ID/$IMAGE_NAME      
