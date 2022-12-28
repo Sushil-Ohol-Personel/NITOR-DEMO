@@ -118,12 +118,10 @@ jobs:
           service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }} #parse the value of repository secret called SERVICE_ACCOUNT_KEY that we have created earlier
           project_id: ${{ env.PROJECT_ID }} #parse the value of env called PROJECT_ID
           export_default_credentials: true
-          
-      - name: Build Docker Image
-        env:
-          PROJECT_ID: nitor-tes
-        run: docker build -t ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} . 
-        
+      - run: |-
+             docker images  
+             ls -la
+             
       - name: Configure Docker Client
         run:  |-
           gcloud auth configure-docker --quiet 
