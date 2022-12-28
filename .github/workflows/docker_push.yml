@@ -12,8 +12,51 @@ on:
        default: latest
        required: true
 jobs:
-   Build-Docker-Images:
+  Snyk-test:
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/maven@master
+      continue-on-error: true 
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=low
+    - run: |
+         npm install snyk -g
+         npm install snyk-to-html -g
+         snyk auth ${{ secrets.SNYK_TOKEN }}
+         snyk test --json-file-output=SnykTestReport.json
+      continue-on-error: true
+    - run: snyk-to-html -i SnykTestReport.json -o SnykTestReport.html
+         
+    - run: mkdir SnykTestReport && cp SnykTestReport.html SnykTestReport
+    - uses: actions/upload-artifact@v3 
+      with:
+        name: Snyk Test
+        path: SnykTestReport
+          
+  Snyk-Code-Scanning:
+    needs: Snyk-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/maven@master
+      continue-on-error: true 
+      env:
+         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+         args: --sarif-file-output=snyk.sarif
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: snyk.sarif
+        
+  Build-Docker-Images:
+    runs-on: ubuntu-latest
+    needs: Snyk-Code-Scanning
     steps:
     - uses: actions/checkout@v3
     - name: Set up JDK 11
@@ -28,8 +71,36 @@ jobs:
           mvn -B package --file pom.xml
           ls -la
           cd target
-          ls -la     
-   Push_to_GCR:
+          ls -la
+          
+    - run: mkdir Artifact-Package && cp target/*.jar Artifact-Package
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Package
+        path: Artifact-Package  
+     
+    - name: Docker image build
+      run: |
+          docker build -t ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} .
+          docker images
+    - name: Snyk Login
+      run: |
+           npm install snyk -g
+           snyk auth ${{ secrets.SNYK_TOKEN }}
+           snyk container test ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} --json-file-output=SnykDockerImage.json
+      continue-on-error: true   
+    - name: Generate Snyk Docker Image json report into Html format
+      run: |
+           npm install snyk-to-html -g
+           snyk-to-html -i SnykDockerImage.json -o SnykDockerImage.html
+           ls -la
+    - run: mkdir DockerScan && cp SnykDockerImage.html DockerScan      
+    - uses: actions/upload-artifact@v3 
+      with:
+        name: Docker report
+        path: DockerScan
+        
+  Push_to_GCR:
     runs-on: ubuntu-latest 
     permissions: 
       contents: read
@@ -46,7 +117,7 @@ jobs:
           service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }} #parse the value of repository secret called SERVICE_ACCOUNT_KEY that we have created earlier
           project_id: ${{ env.PROJECT_ID }} #parse the value of env called PROJECT_ID
           export_default_credentials: true
-         
+          
       - name: Build Docker Image
         env:
           PROJECT_ID: nitor-tes
@@ -61,4 +132,4 @@ jobs:
           PROJECT_ID: nitor-tes
         run: |-
           docker tag ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} gcr.io/$PROJECT_ID/${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} 
-          docker push gcr.io/$PROJECT_ID/${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}}       
+          docker push gcr.io/$PROJECT_ID/${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}} 
