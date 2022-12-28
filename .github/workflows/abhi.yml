@@ -1,4 +1,4 @@
-name: Final
+name: DevSecOps DEMO
 
 on:
  workflow_dispatch:
@@ -99,7 +99,7 @@ jobs:
       with:
         name: Docker report
         path: DockerScan
-  Deploy:
+  Deploy_To_GCR:
     runs-on: ubuntu-latest #run this workflow on ubuntu instance
     needs: Build-Docker-Images
     permissions: #make sure we add permission to read and write package
