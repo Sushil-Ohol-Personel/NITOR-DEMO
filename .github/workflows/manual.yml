@@ -1,4 +1,4 @@
-name: Java CI with Snyk,Maven,Docker
+name: manual
 
 on:
  workflow_dispatch:
