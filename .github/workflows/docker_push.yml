@@ -32,7 +32,7 @@ jobs:
           export_default_credentials: true
          
       - name: Build with Maven
-      run: |
+        run: |
           mvn -B package --file pom.xml
 
 
