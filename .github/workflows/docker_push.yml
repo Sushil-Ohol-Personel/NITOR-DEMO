@@ -33,7 +33,7 @@ jobs:
          
       - name: Build with Maven
         run: |
-          mvn -B package --file pom.xml
+              mvn -B package --file pom.xml
 
 
       - name: Build Docker Image
