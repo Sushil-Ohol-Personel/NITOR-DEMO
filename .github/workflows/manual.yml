@@ -130,7 +130,7 @@ jobs:
           
       - name: Build Docker Image
         env:
-          IMAGE_NAME: linux_tweet_app #create env called IMAGE_NAME consisted of actual name of Docker Image after we build
+          IMAGE_NAME: devsecops #create env called IMAGE_NAME consisted of actual name of Docker Image after we build
           PROJECT_ID: nitor-tes
         run: docker build -t $IMAGE_NAME:latest . #build the docker image
         
