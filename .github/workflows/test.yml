@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v1 #checkouts your repo, so this workflow can access it
       - name: Login to GCR
         env:
-          PROJECT_ID: cicd-372106 #create env called PROJECT_ID consisted of our actual GCP Project ID
+          PROJECT_ID: nitor-tes #create env called PROJECT_ID consisted of our actual GCP Project ID
         uses: google-github-actions/setup-gcloud@v0.3.0 #checkouts GCR repo, so this workflow can access it
         with:
           service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }} #parse the value of repository secret called SERVICE_ACCOUNT_KEY that we have created earlier
@@ -46,7 +46,7 @@ jobs:
       - name: Push Docker Image to Container Registry GCR
         env: 
           IMAGE_NAME: ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}}
-          PROJECT_ID: cicd-372106 
+          PROJECT_ID: nitor-tes 
         #tag docker image to gcr image format then push to gcr
         run: |-
           docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME
