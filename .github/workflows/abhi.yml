@@ -101,6 +101,7 @@ jobs:
         path: DockerScan
   Deploy:
     runs-on: ubuntu-latest #run this workflow on ubuntu instance
+    needs: Build-Docker-Images
     permissions: #make sure we add permission to read and write package
       contents: read
       packages: write
