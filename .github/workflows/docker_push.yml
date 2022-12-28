@@ -141,7 +141,7 @@ jobs:
          env: 
           IMAGE_NAME: ${{github.event.inputs.DockerImageName}}:${{github.event.inputs.tag}}
           PROJECT_ID: nitor-tes
-		  
+
          run: |-
           docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:latest 
           docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest 
