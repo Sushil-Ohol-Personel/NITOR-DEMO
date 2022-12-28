@@ -100,7 +100,7 @@ jobs:
         name: Docker report
         path: DockerScan
         
- Docker Image Push to GCR:
+  Docker Image Push to GCR:
     runs-on: ubuntu-latest 
     permissions: 
       contents: read
