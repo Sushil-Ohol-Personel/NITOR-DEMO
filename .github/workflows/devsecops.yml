@@ -28,7 +28,8 @@ jobs:
          npm install snyk-to-html -g
          snyk auth ${{ secrets.SNYK_TOKEN }}
          snyk test --json-file-output=SnykTestReport.json
-         snyk-to-html -i SnykTestReport.json -o SnykTestReport.html
+      continue-on-error: true
+   - run: snyk-to-html -i SnykTestReport.json -o SnykTestReport.html
          ls -la
     - run: mkdir SnykTestReport && cp SnykTestReport.html SnykTestReport
     - uses: actions/upload-artifact@v3 
